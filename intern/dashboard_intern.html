@@ -473,15 +473,33 @@ async function laadData() {
     }
 
     statusEl.className = 'welcome-status loading';
-    statusEl.innerHTML = '<span class="pulse">●</span> Data ophalen van Google Drive...';
+    statusEl.innerHTML = '<span class="pulse">●</span> Data ophalen...';
 
-    const resp = await fetch(fetchUrl);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} — controleer of het bestand publiek gedeeld is`);
+    // Timeout van 20 seconden — voorkomt eindeloos hangen
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
 
-    // Google Drive stuurt soms een HTML bevestigingspagina voor grote bestanden
+    let resp;
+    try {
+      resp = await fetch(fetchUrl, { signal: controller.signal });
+    } catch(fetchErr) {
+      clearTimeout(timer);
+      if (fetchErr.name === 'AbortError') {
+        throw new Error('Timeout (20s) — de URL is niet bereikbaar. Controleer of de repo publiek is en de URL correct.');
+      }
+      // CORS-fout bij lokaal openen (file://)
+      throw new Error('Netwerkfout — open het dashboard via een webserver (GitHub Pages) i.p.v. rechtstreeks als bestand. Of controleer of de GitHub repo publiek staat.');
+    }
+    clearTimeout(timer);
+
+    if (resp.status === 404) throw new Error('Bestand niet gevonden (404) — is de GitHub repo publiek? Ga naar Settings → Change visibility → Public.');
+    if (resp.status === 403) throw new Error('Toegang geweigerd (403) — de GitHub repo staat waarschijnlijk op privé. Zet hem publiek via repo Settings.');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} — controleer of het bestand bereikbaar is.`);
+
     const text = await resp.text();
+    // Google Drive stuurt soms een HTML bevestigingspagina voor grote bestanden
     if (text.trim().startsWith('<')) {
-      throw new Error('Google Drive stuurt een HTML-pagina terug. Gebruik een directe download-URL of maak het bestand kleiner dan 25MB.');
+      throw new Error('Server stuurde HTML terug i.p.v. JSON. Controleer of de repo publiek is of gebruik een directe download-URL.');
     }
     DATA = JSON.parse(text);
     MAANDEN = Object.keys(DATA).sort();
@@ -952,24 +970,4 @@ function chartOpties(yLabel) {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { labels: { color:'#8899aa', font:{ family:'Titillium Web', size:12 } } }
-    },
-    scales: {
-      x: {
-        grid: { color:'rgba(255,255,255,0.04)' },
-        ticks: { color:'#8899aa', font:{ family:'Titillium Web', size:11 } }
-      },
-      y: {
-        grid: { color:'rgba(255,255,255,0.04)' },
-        ticks: { color:'#8899aa', font:{ family:'Titillium Web', size:11 } },
-        title: { display:!!yLabel, text:yLabel, color:'#556070', font:{ family:'Titillium Web', size:11 } }
-      }
-    }
-  };
-}
-
-// ╔═══════════════════════════════════════════════════════╗
-// ║  TABS                                                 ║
-// ╚═══════════════════════════════════════════════════════╝
-function switchTab(id, btn) {
-  document.querySelectorAll('.tab-panel').for
+      legend: { labe
