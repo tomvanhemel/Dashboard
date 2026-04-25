@@ -1,0 +1,29 @@
+name: Deploy intern dashboard
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Gemini key injecteren
+        run: |
+          sed -i "s|%%GEMINI_KEY%%|${{ secrets.GEMINI_API_KEY }}|g" \
+            paraatheid_intern_analyse/dashboard_intern.html
+
+      - name: Deploy naar GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./paraatheid_intern_analyse
+          destination_dir: intern
+          commit_message: "Deploy intern dashboard [skip ci]"
