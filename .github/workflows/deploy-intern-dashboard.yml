@@ -17,7 +17,7 @@ jobs:
 
       - name: Gemini key injecteren
         run: |
-          sed -i "s|%%GEMINI_KEY%%|${{ secrets.GEMINI_API_KEY }}|g" \
+          sed -i "s|%%OPENAI_KEY%%|${{ secrets.OPENAI_API_KEY }}|g" \
             paraatheid_intern_analyse/dashboard_intern.html
 
       - name: Deploy naar GitHub Pages
