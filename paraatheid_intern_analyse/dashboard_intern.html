@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HVZ Taxandria — Post Paraatheid Analyse</title>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ══════════════════════════════════════════════════
+   KLEURENPALET — HVZ TAXANDRIA HUISSTIJL
+══════════════════════════════════════════════════ */
+:root {
+  --bg:         #0d0f14;
+  --bg2:        #141820;
+  --bg3:        #1c2230;
+  --border:     #2a3348;
+  --accent:     #ea5d30;   /* Taxandria oranje */
+  --accent2:    #ffdd2f;   /* Taxandria geel */
+  --text:       #e2e8f0;
+  --text2:      #8899aa;
+  --text3:      #556070;
+  --ok:         #22c55e;
+  --warn:       #f59e0b;
+  --crit:       #ef4444;
+  --best-clr:   #f472b6;
+  --bev6-clr:   #60a5fa;
+  --bwm-clr:    #34d399;
+  --font:       'Titillium Web', sans-serif;
+  --radius:     6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; }
+
+/* ── WELCOME ── */
+.welcome-screen {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 100vh; padding: 40px 20px;
+}
+.welcome-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-top: 3px solid var(--accent); border-radius: 10px;
+  padding: 48px 40px; max-width: 460px; width: 100%; text-align: center;
+}
+.welcome-badge {
+  display: inline-block; background: var(--accent); color: #fff;
+  font-weight: 700; font-size: 11px; padding: 4px 12px; border-radius: 4px;
+  letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 24px;
+}
+.welcome-title { font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.welcome-sub { font-size: 13px; color: var(--text2); margin-bottom: 36px; line-height: 1.7; }
+.welcome-label {
+  display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--text3); margin-bottom: 8px; text-align: left;
+}
+.welcome-select {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); padding: 12px 16px; border-radius: var(--radius);
+  font-family: var(--font); font-size: 15px; outline: none;
+  cursor: pointer; margin-bottom: 20px; transition: border-color .2s;
+}
+.welcome-select:focus { border-color: var(--accent); }
+.welcome-btn {
+  width: 100%; background: var(--accent); color: #fff; border: none;
+  padding: 14px 24px; border-radius: var(--radius); font-family: var(--font);
+  font-size: 15px; font-weight: 700; cursor: pointer; transition: background .2s;
+  letter-spacing: 0.5px;
+}
+.welcome-btn:hover { background: #d94e20; }
+.welcome-btn:disabled { background: var(--bg3); color: var(--text3); cursor: not-allowed; }
+.welcome-status { margin-top: 16px; font-size: 12px; color: var(--text3); min-height: 18px; }
+.welcome-status.loading { color: var(--accent2); }
+.welcome-status.error   { color: var(--crit); }
+.welcome-status.ok      { color: var(--ok); }
+
+/* ── HEADER ── */
+header {
+  background: var(--bg2); border-bottom: 2px solid var(--accent);
+  padding: 12px 24px; display: flex; align-items: center;
+  justify-content: space-between; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.logo-badge {
+  background: var(--accent); color: #fff; font-weight: 700;
+  font-size: 11px; padding: 4px 10px; border-radius: 4px;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.header-post { font-size: 16px; font-weight: 600; color: var(--text); }
+.header-post span { color: var(--accent); }
+.wissel-btn {
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+  padding: 6px 14px; border-radius: var(--radius); cursor: pointer;
+  font-family: var(--font); font-size: 12px; font-weight: 600;
+  transition: border-color .2s, color .2s;
+}
+.wissel-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── KPI BAR ── */
+.kpi-bar {
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  padding: 12px 24px; display: flex; gap: 10px; flex-wrap: wrap;
+}
+.kpi-pill {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 16px; min-width: 130px;
+}
+.kpi-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text3); margin-bottom: 4px;
+}
+.kpi-value { font-size: 21px; font-weight: 700; color: var(--text); }
+.kpi-value.ok   { color: var(--ok); }
+.kpi-value.warn { color: var(--warn); }
+.kpi-value.crit { color: var(--crit); }
+.kpi-value.accent  { color: var(--accent); }
+.kpi-value.accent2 { color: var(--accent2); }
+
+/* ── TABS ── */
+.tabs-nav {
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  padding: 0 24px; display: flex;
+}
+.tab-btn {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--text2); padding: 12px 18px; font-family: var(--font);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: color .2s, border-color .2s; white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── CONTENT ── */
+.main { padding: 24px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 20px;
+}
+.card-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--text3); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title::before {
+  content: ''; display: inline-block; width: 3px; height: 12px;
+  background: var(--accent); border-radius: 2px;
+}
+
+/* ── ACTIE BOX ── */
+.actie-box {
+  background: var(--bg3); border-left: 3px solid var(--accent2);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 12px 16px; margin-top: 14px;
+  font-size: 13px; color: var(--text2); line-height: 1.7;
+}
+.actie-box strong { color: var(--accent2); }
+
+/* ── GRIDS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+@media (max-width: 800px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+/* ── CHARTS ── */
+.chart-wrap    { position: relative; height: 300px; }
+.chart-wrap-sm { position: relative; height: 220px; }
+
+/* ── HEATMAP ── */
+.heatmap-wrap { overflow-x: auto; }
+.heatmap-table { border-collapse: collapse; width: 100%; font-size: 11px; }
+.heatmap-table th {
+  padding: 6px 8px; color: var(--text3); font-weight: 700;
+  text-align: center; border-bottom: 1px solid var(--border);
+  font-family: var(--font); font-size: 11px;
+}
+.uur-label {
+  padding: 2px 10px 2px 0; color: var(--text3);
+  text-align: right; white-space: nowrap; font-size: 10px;
+}
+.heatmap-cell {
+  height: 30px; text-align: center; border-radius: 3px;
+  transition: filter .15s; cursor: default; padding: 0 2px;
+}
+.heatmap-cell:hover { filter: brightness(1.35); }
+.cell-val { font-size: 9px; line-height: 30px; color: rgba(255,255,255,0.85); }
+
+/* ── BADGES ── */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: 700; }
+.badge-BEST { background: rgba(244,114,182,0.18); color: #f472b6; border: 1px solid rgba(244,114,182,0.5); }
+.badge-BEV6 { background: rgba(96,165,250,0.18);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.5);  }
+.badge-BWM  { background: rgba(52,211,153,0.18);   color: #34d399; border: 1px solid rgba(52,211,153,0.5);  }
+
+/* ── LEGEND ── */
+.legend-row { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; }
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text2); }
+.legend-dot  { width: 12px; height: 12px; border-radius: 3px; }
+
+/* ── DATA RANGE TAG ── */
+.data-range-tag {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 4px; padding: 3px 10px; font-size: 11px; color: var(--text3);
+}
+
+/* ── AI TAB ── */
+.ai-intro {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px; margin-bottom: 20px;
+}
+.ai-intro p { color: var(--text2); line-height: 1.7; font-size: 13px; }
+.ai-btn {
+  background: var(--accent); color: #fff; border: none;
+  padding: 12px 28px; border-radius: var(--radius); font-family: var(--font);
+  font-size: 14px; font-weight: 700; cursor: pointer; transition: background .2s;
+  display: inline-flex; align-items: center; gap: 8px; letter-spacing: 0.3px;
+}
+.ai-btn:hover { background: #d94e20; }
+.ai-btn:disabled { background: var(--bg3); color: var(--text3); cursor: not-allowed; }
+.ai-result {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px; margin-top: 20px; display: none;
+}
+.ai-result.visible { display: block; }
+.ai-result h3 {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--accent); margin: 20px 0 10px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.ai-result h3:first-child { margin-top: 0; }
+.ai-result p { color: var(--text2); line-height: 1.8; font-size: 13px; margin-bottom: 8px; }
+.ai-result ul { list-style: none; padding: 0; margin: 0; }
+.ai-result li {
+  padding: 7px 0 7px 18px; color: var(--text2); font-size: 13px;
+  line-height: 1.6; border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.ai-result li:last-child { border-bottom: none; }
+.ai-result li::before { content: '▸'; color: var(--accent); position: absolute; left: 0; }
+.ai-result strong { color: var(--text); }
+
+/* ── LOADING ── */
+.spinner {
+  width: 28px; height: 28px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .7s linear infinite; display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.2;} }
+.pulse { animation: pulse 1s infinite; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     WELKOMSTSCHERM — POST SELECTIE
+══════════════════════════════════════ -->
+<div id="welcome-screen" class="welcome-screen">
+  <div class="welcome-card">
+    <div class="welcome-badge">HVZ · Taxandria</div>
+    <h1 class="welcome-title">Post Paraatheid</h1>
+    <p class="welcome-sub">
+      Selecteer je post om de paraatheidsanalyse van jouw brandweerpost te bekijken.
+      Alle cijfers, knelpunten en actiepunten zijn specifiek voor jouw post.
+    </p>
+
+    <label class="welcome-label" for="post-select">Mijn post</label>
+    <select id="post-select" class="welcome-select">
+      <option value="">— data ophalen... —</option>
+    </select>
+
+    <button class="welcome-btn" id="start-btn" disabled onclick="selecteerPost()">
+      Toon mijn dashboard →
+    </button>
+
+    <p class="welcome-status" id="welcome-status">
+      <span class="pulse">●</span> Verbinding maken met Google Drive...
+    </p>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     HOOFDDASHBOARD
+══════════════════════════════════════ -->
+<div id="main-dashboard" style="display:none">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <span class="logo-badge">HVZ · Taxandria</span>
+      <span class="header-post">Post <span id="hdr-post">—</span></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="data-range-tag" id="data-range">—</span>
+      <button class="wissel-btn" onclick="wisselPost()">↺ Wissel post</button>
+    </div>
+  </header>
+
+  <!-- KPI BAR -->
+  <div class="kpi-bar">
+    <div class="kpi-pill">
+      <div class="kpi-label">Gem. MAP onbeschikbaar</div>
+      <div class="kpi-value" id="kpi-map">—</div>
+    </div>
+    <div class="kpi-pill">
+      <div class="kpi-label">Totaal incidenten</div>
+      <div class="kpi-value accent2" id="kpi-inc">—</div>
+    </div>
+    <div class="kpi-pill">
+      <div class="kpi-label">Knelpunt uur</div>
+      <div class="kpi-value accent" id="kpi-uur">—</div>
+    </div>
+    <div class="kpi-pill">
+      <div class="kpi-label">Knelpunt dag</div>
+      <div class="kpi-value accent" id="kpi-dag">—</div>
+    </div>
+    <div class="kpi-pill">
+      <div class="kpi-label">Knelpunt functie</div>
+      <div class="kpi-value" id="kpi-func" style="font-size:14px;line-height:32px">—</div>
+    </div>
+  </div>
+
+  <!-- TABS NAV -->
+  <div class="tabs-nav">
+    <button class="tab-btn active" onclick="switchTab('trendlijn',this)">① Trendlijn</button>
+    <button class="tab-btn" onclick="switchTab('heatmap',this)">② Knelpunt Uren &amp; Dagen</button>
+    <button class="tab-btn" onclick="switchTab('functie',this)">③ Knelpunt Functie</button>
+    <button class="tab-btn" onclick="switchTab('ai',this)">④ AI Analyse</button>
+  </div>
+
+  <div class="main">
+
+    <!-- ── TAB 1: TRENDLIJN ── -->
+    <div class="tab-panel active" id="tab-trendlijn">
+      <div class="card">
+        <div class="card-title" id="trend-card-titel">MAP Onbeschikbaarheid — Maandelijkse Trend</div>
+        <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
+        <div class="actie-box" id="actie-trend">
+          <strong>Actie:</strong> Bekijk of de onbeschikbaarheid stijgt of daalt. Een stijgende trend vraagt om bijsturing in de bezettingsplanning.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Incidenten per Maand — Aantal keer MAP onbeschikbaar</div>
+        <div class="chart-wrap-sm"><canvas id="chart-inc"></canvas></div>
+        <div class="actie-box">
+          <strong>Actie:</strong> Pieken in incidenten correleren met periodes van verhoogde onbeschikbaarheid. Koppel dit aan verlofplanning of bekende afwezigheidsperiodes.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB 2: HEATMAP ── -->
+    <div class="tab-panel" id="tab-heatmap">
+      <div class="card">
+        <div class="card-title" id="heatmap-titel">Onbeschikbaarheid per Uur × Weekdag</div>
+        <div class="heatmap-wrap">
+          <table class="heatmap-table" id="heatmap-tbl"></table>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;margin-top:10px">
+          <span style="font-size:11px;color:var(--text3)">Schaal:</span>
+          <span style="background:rgba(30,22,22,0.6);width:16px;height:16px;border-radius:2px;display:inline-block"></span><span style="font-size:11px;color:var(--text3)">0%</span>
+          <span style="background:rgba(120,40,22,0.7);width:16px;height:16px;border-radius:2px;display:inline-block"></span><span style="font-size:11px;color:var(--text3)">Matig</span>
+          <span style="background:rgba(220,60,30,0.9);width:16px;height:16px;border-radius:2px;display:inline-block"></span><span style="font-size:11px;color:var(--text3)">Hoog</span>
+        </div>
+        <div class="actie-box" id="actie-heatmap">
+          <strong>Actie:</strong> De rood gekleurde vakjes tonen wanneer jouw post het vaakst zonder MAP zit. Plan bijstand of versterkte wachten op deze momenten.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Dagprofiel — Gemiddelde onbeschikbaarheid per weekdag</div>
+        <div class="chart-wrap-sm"><canvas id="chart-dagprofiel"></canvas></div>
+        <div class="actie-box">
+          <strong>Actie:</strong> Hoge balken op bepaalde dagen wijzen op structurele onderbezetting. Controleer de beschikbaarheidsplanning voor die specifieke dagen.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB 3: KNELPUNT FUNCTIE ── -->
+    <div class="tab-panel" id="tab-functie">
+      <div class="card">
+        <div class="card-title">Oorzaakverdeling MAP-uitval per Maand</div>
+        <div class="chart-wrap"><canvas id="chart-oorzaak"></canvas></div>
+        <div class="legend-row">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--best-clr)"></div> BEST — Bestuurder</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--bev6-clr)"></div> BEV6 — Bevelvoerder</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--bwm-clr)"></div>  BWM — Brandweerman</div>
+        </div>
+        <div class="actie-box" id="actie-oorzaak">
+          <strong>Actie:</strong> De dominante kleur toont welk functietype het vaakst de MAP-uitval veroorzaakt. Gerichte werving of planaanpassing voor dat profiel heeft de grootste impact.
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title"><span class="badge badge-BEST">BEST</span> &nbsp;Bestuurder Trend</div>
+          <div class="chart-wrap-sm"><canvas id="chart-func-best"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="badge badge-BEV6">BEV6</span> &nbsp;Bevelvoerder Trend</div>
+          <div class="chart-wrap-sm"><canvas id="chart-func-bev6"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="badge badge-BWM">BWM</span> &nbsp;Brandweerman Trend</div>
+          <div class="chart-wrap-sm"><canvas id="chart-func-bwm"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB 4: AI ANALYSE ── -->
+    <div class="tab-panel" id="tab-ai">
+      <div class="ai-intro">
+        <p>
+          Deze analyse gebruikt Gemini AI om de paraatheidsdata van
+          <strong id="ai-post-naam" style="color:var(--accent)">—</strong>
+          te interpreteren en concrete actiepunten te formuleren.
+          De analyse is uitsluitend gebaseerd op de gegevens van jouw post.
+        </p>
+      </div>
+      <button class="ai-btn" id="ai-btn" onclick="startAIAnalyse()">
+        ▶ &nbsp;Genereer Post Analyse
+      </button>
+      <div class="ai-result" id="ai-result"></div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /main-dashboard -->
+
+
+<script>
+// ╔═══════════════════════════════════════════════════════╗
+// ║  CONFIGURATIE — pas deze twee waarden aan             ║
+// ╚═══════════════════════════════════════════════════════╝
+// JSON rechtstreeks vanuit GitHub repo (raw URL):
+const GDRIVE_JSON_URL = 'https://raw.githubusercontent.com/tomvanhemel/Dashboard/main/hvz_paraatheid.json';
+// Pas bovenstaande URL aan met jouw GitHub gebruikersnaam en repo-naam.
+// Of gebruik nog steeds een Google Drive publieke link — beide werken.
+
+// De key hieronder wordt automatisch ingevuld door GitHub Actions vanuit Repository Secrets.
+// In je repo staat letterlijk %%GEMINI_KEY%% — de echte waarde verschijnt pas op de gedeployde site.
+const GEMINI_API_KEY = '%%GEMINI_KEY%%';
+
+// ─────────────────────────────────────────────────────────
+//  CONSTANTEN
+// ─────────────────────────────────────────────────────────
+const DAGEN      = ['ma','di','wo','do','vr','za','zo'];
+const DAG_LBL    = { ma:'Ma', di:'Di', wo:'Wo', do:'Do', vr:'Vr', za:'Za', zo:'Zo' };
+const UREN       = Array.from({length:24}, (_,i) => String(i));
+const FUNC_KLEUREN = { BEST: '#f472b6', BEV6: '#60a5fa', BWM: '#34d399' };
+
+// ─────────────────────────────────────────────────────────
+//  GLOBALE STAAT
+// ─────────────────────────────────────────────────────────
+let DATA         = null;
+let MAANDEN      = [];
+let ACTIEVE_POST = null;
+const charts     = {};
+
+// ╔═══════════════════════════════════════════════════════╗
+// ║  DATA LADEN VAN GOOGLE DRIVE                          ║
+// ╚═══════════════════════════════════════════════════════╝
+async function laadData() {
+  const statusEl = document.getElementById('welcome-status');
+  const startBtn = document.getElementById('start-btn');
+
+  try {
+    // Haal File ID uit Drive URL en bouw download URL
+    let fetchUrl = GDRIVE_JSON_URL;
+    const idMatch = GDRIVE_JSON_URL.match(/\/d\/([a-zA-Z0-9_-]{10,})/);
+    if (idMatch) {
+      fetchUrl = `https://drive.google.com/uc?export=download&id=${idMatch[1]}`;
+    }
+
+    statusEl.className = 'welcome-status loading';
+    statusEl.innerHTML = '<span class="pulse">●</span> Data ophalen van Google Drive...';
+
+    const resp = await fetch(fetchUrl);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} — controleer of het bestand publiek gedeeld is`);
+
+    // Google Drive stuurt soms een HTML bevestigingspagina voor grote bestanden
+    const text = await resp.text();
+    if (text.trim().startsWith('<')) {
+      throw new Error('Google Drive stuurt een HTML-pagina terug. Gebruik een directe download-URL of maak het bestand kleiner dan 25MB.');
+    }
+    DATA = JSON.parse(text);
+    MAANDEN = Object.keys(DATA).sort();
+
+    // Populeer dropdown
+    const allePosten = Object.keys(DATA[MAANDEN[0]].map).sort();
+    const sel = document.getElementById('post-select');
+    sel.innerHTML = '<option value="">— Kies je post —</option>';
+    allePosten.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p;
+      opt.textContent = p;
+      sel.appendChild(opt);
+    });
+
+    startBtn.disabled = false;
+    statusEl.className = 'welcome-status ok';
+    statusEl.textContent = `✓ ${MAANDEN.length} maanden geladen  (${MAANDEN[0]} → ${MAANDEN[MAANDEN.length-1]})`;
+
+  } catch(err) {
+    statusEl.className = 'welcome-status error';
+    statusEl.textContent = `⚠ Laadprobleem: ${err.message}`;
+    startBtn.textContent = '↺ Opnieuw proberen';
+    startBtn.disabled = false;
+    startBtn.onclick = () => { startBtn.disabled=true; laadData(); };
+  }
+}
+
+// ╔═══════════════════════════════════════════════════════╗
+// ║  POST SELECTIE                                        ║
+// ╚═══════════════════════════════════════════════════════╝
+function selecteerPost() {
+  const post = document.getElementById('post-select').value;
+  if (!post) return;
+  ACTIEVE_POST = post;
+
+  // Update header
+  const kort = post.replace('TAX ', '');
+  document.getElementById('hdr-post').textContent = kort;
+  document.getElementById('data-range').textContent = `${MAANDEN[0]} → ${MAANDEN[MAANDEN.length-1]}`;
+  document.getElementById('ai-post-naam').textContent = post;
+
+  // Scherm wisselen
+  document.getElementById('welcome-screen').style.display = 'none';
+  document.getElementById('main-dashboard').style.display = 'block';
+
+  // Render alles
+  berekenKPIs(post);
+  renderTrendlijn(post);
+  renderHeatmap(post);
+  renderFunctie(post);
+
+  // Reset AI tab
+  document.getElementById('ai-result').className = 'ai-result';
+  document.getElementById('ai-result').innerHTML = '';
+  document.getElementById('ai-btn').disabled = false;
+  document.getElementById('ai-btn').innerHTML = '▶ &nbsp;Genereer Post Analyse';
+}
+
+function wisselPost() {
+  document.getElementById('main-dashboard').style.display = 'none';
+  document.getElementById('welcome-screen').style.display = 'flex';
+}
+
+// ╔═══════════════════════════════════════════════════════╗
+// ║  BEREKEN KPI's                                        ║
+// ╚═══════════════════════════════════════════════════════╝
+function berekenKPIs(post) {
+
+  // ── 1. Gem. MAP onbeschikbaarheid ──
+  const maandPcts = postGemPctPerMaand(post);
+  const gemMap    = maandPcts.reduce((a,b)=>a+b,0) / maandPcts.length;
+  const mapEl     = document.getElementById('kpi-map');
+  mapEl.textContent = gemMap.toFixed(1) + '%';
+  mapEl.className   = 'kpi-value ' + (gemMap >= 10 ? 'crit' : gemMap >= 4 ? 'warn' : 'ok');
+
+  // ── 2. Totaal incidenten ──
+  let totInc = 0;
+  MAANDEN.forEach(m => {
+    const u = DATA[m]?.map?.[post]?.uren || {};
+    UREN.forEach(uur => DAGEN.forEach(d => { totInc += u[uur]?.[d]?.n_incidenten || 0; }));
+  });
+  document.getElementById('kpi-inc').textContent = totInc;
+
+  // ── 3. Knelpunt uur ──
+  const uurGem = {};
+  UREN.forEach(uur => {
+    const vals = [];
+    MAANDEN.forEach(m => DAGEN.forEach(d => {
+      const v = DATA[m]?.map?.[post]?.uren?.[uur]?.[d]?.pct;
+      if (v !== undefined) vals.push(v);
+    }));
+    uurGem[uur] = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+  });
+  const [topUur, topUurPct] = Object.entries(uurGem).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('kpi-uur').textContent = `${topUur}u (${topUurPct.toFixed(1)}%)`;
+
+  // ── 4. Knelpunt dag ──
+  const dagGem = {};
+  DAGEN.forEach(d => {
+    const vals = [];
+    MAANDEN.forEach(m => UREN.forEach(uur => {
+      const v = DATA[m]?.map?.[post]?.uren?.[uur]?.[d]?.pct;
+      if (v !== undefined) vals.push(v);
+    }));
+    dagGem[d] = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+  });
+  const [topDag, topDagPct] = Object.entries(dagGem).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('kpi-dag').textContent = `${DAG_LBL[topDag]} (${topDagPct.toFixed(1)}%)`;
+
+  // ── 5. Knelpunt functie ──
+  const funcTot = { BEST:0, BEV6:0, BWM:0 };
+  let fcnt = 0;
+  MAANDEN.forEach(m => {
+    const o = DATA[m]?.map?.[post]?.oorzaak_pct;
+    if (o) { funcTot.BEST+=o.BEST||0; funcTot.BEV6+=o.BEV6||0; funcTot.BWM+=o.BWM||0; fcnt++; }
+  });
+  if (fcnt) {
+    const dom = Object.entries(funcTot).sort((a,b)=>b[1]-a[1])[0][0];
+    document.getElementById('kpi-func').innerHTML = `<span class="badge badge-${dom}">${dom}</span>`;
+  }
+
+  // ── Actie tekst trendlijn ──
+  const trend = maandPcts[maandPcts.length-1] - maandPcts[0];
+  const actieEl = document.getElementById('actie-trend');
+  if (trend > 2) {
+    actieEl.innerHTML = `<strong>⚠ Stijgende trend (+${trend.toFixed(1)}%):</strong> De MAP-onbeschikbaarheid bij ${post} neemt toe. Controleer de wachtplanning en identificeer structurele tekorten in de bezetting.`;
+  } else if (trend < -2) {
+    actieEl.innerHTML = `<strong>✓ Dalende trend (${trend.toFixed(1)}%):</strong> De paraatheid bij ${post} verbetert. Houd de ingezette maatregelen aan en monitor de komende maanden.`;
+  } else {
+    actieEl.innerHTML = `<strong>Stabiele situatie:</strong> De MAP-onbeschikbaarheid bij ${post} schommelt weinig. Controleer regelmatig of er geen opkomende knelpunten zijn.`;
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+//  HULP: gem pct per maand voor post
+// ─────────────────────────────────────────────────────────
+function postGemPctPerMaand(post) {
+  return MAANDEN.map(m => {
+    const ud = DATA[m]?.map?.[post]?.uren || {};
+    const vals = [];
+    UREN.forEach(u => DAGEN.forEach(d => { const v = ud[u]?.[d]?.pct; if (v!==undefined) vals.push(v); }));
+    return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+  });
+}
+
+// ╔═══════════════════════════════════════════════════════╗
+// ║  TAB 1 — TRENDLIJN                                    ║
+// ╚═══════════════════════════════════════════════════════╝
+function renderTrendlijn(post) {
+  const labels    = MAANDEN.map(m => m.replace('20','').replace('-','/'));
+  const maandPcts = postGemPctPerMaand(post).map(v => +v.toFixed(2));
+
+  const incData = MAANDEN.map(m => {
+    let tot = 0;
+    const ud = DATA[m]?.map?.[post]?.uren || {};
+    UREN.forEach(u => DAGEN.forEach(d => { tot += ud[u]?.[d]?.n_incidenten || 0; }));
+    return tot;
+  });
+
+  vernieuwChart('chart-trend', {
+    type: 'line',
+    data: { labels, datasets: [{
+      label: 'MAP onbeschikbaar %',
+      data: maandPcts,
+      borderColor: '#ea5d30',
+      backgroundColor: 'rgba(234,93,48,0.1)',
+      borderWidth: 2.5,
+      pointRadius: 5,
+      pointBackgroundColor: '#ea5d30',
+      fill: true, tension: 0.35
+    }]},
+    options: chartOpties('% onbeschikbaar')
+  });
+
+  vernieuwChart('chart-inc', {
+    type: 'bar',
+    data: { labels, datasets: [{
+      label: 'Incidenten',
+      data: incData,
+      backgroundColor: 'rgba(255,221,47,0.7)',
+      borderColor: '#ffdd2f',
+      borderWidth: 1,
+      borderRadius: 3
+    }]},
+    options: chartOpties('incidenten')
+  });
+
+  document.getElementById('trend-card-titel').textContent =
+    `MAP Onbeschikbaarheid — Maandelijkse Trend (${post.replace('TAX ','')})`;
+}
+
+// ╔═══════════════════════════════════════════════════════╗
+// ║  TAB 2 — HEATMAP                                      ║
+// ╚═══════════════════════════════════════════════════════╝
+function renderHeatmap(post) {
+  // Gemiddelde per uur × dag over alle maanden
+  const matrix = {};
+  UREN.forEach(u => {
+    matrix[u] = {};
+    DAGEN.forEach(d => {
+      const vals = MAANDEN.map(m => DATA[m]?.map?.[post]?.uren?.[u]?.[d]?.pct || 0);
+      matrix[u][d] = vals.reduce((a,b)=>a+b,0) / vals.length;
+    });
+  });
+
+  const allVals = UREN.flatMap(u => DAGEN.map(d => matrix[u][d]));
+  const maxVal  = Math.max(...allVals, 0.1);
+
+  // Bouw heatmap HTML
+  let html = '<thead><tr><th></th>';
+  DAGEN.forEach(d => { html += `<th>${DAG_LBL[d]}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  UREN.forEach(u => {
+    const lbl = u.padStart(2,'0') + ':00';
+    html += `<tr><td class="uur-label">${lbl}</td>`;
+    DAGEN.forEach(d => {
+      const pct   = matrix[u][d];
+      const ratio = pct / maxVal;
+      const bg    = ratioNaarKleur(ratio);
+      const toon  = pct > 0.5 ? pct.toFixed(0) + '%' : '';
+      html += `<td class="heatmap-cell" style="background:${bg}" title="${lbl} ${DAG_LBL[d]}: ${pct.toFixed(1)}%">
+        <span class="cell-val">${toon}</span></td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('heatmap-tbl').innerHTML = html;
+  document.getElementById('heatmap-titel').textContent =
+    `Onbeschikbaarheid per Uur × Weekdag — ${post.replace('TAX ','')}`;
+
+  // Dagprofiel chart
+  const dagPcts = DAGEN.map(d => {
+    const vals = UREN.map(u => matrix[u][d]);
+    return +(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
+  });
+  const maxDag = Math.max(...dagPcts);
+
+  vernieuwChart('chart-dagprofiel', {
+    type: 'bar',
+    data: { labels: DAGEN.map(d => DAG_LBL[d]), datasets: [{
+      label: 'Gem. % onbeschikbaar',
+      data: dagPcts,
+      backgroundColor: dagPcts.map(v => v === maxDag ? 'rgba(234,93,48,0.85)' : 'rgba(234,93,48,0.32)'),
+      borderColor: dagPcts.map(v => v === maxDag ? '#ea5d30' : 'rgba(234,93,48,0.5)'),
+      borderWidth: 1, borderRadius: 4
+    }]},
+    options: chartOpties('gem. % onbeschikbaar')
+  });
+
+  // Update actie-tekst
+  const knelpuntDag = DAGEN[dagPcts.indexOf(maxDag)];
+  document.getElementById('actie-heatmap').innerHTML =
+    `<strong>Knelpunt:</strong> ${post.replace('TAX ','')} is het kwetsbaarst op <strong style="color:var(--accent)">${DAG_LBL[knelpuntDag]}dag</strong> (gem. ${maxDag.toFixed(1)}% onbeschikbaar). Plan extra aandacht voor bezetting op dit moment.`;
+}
+
+function ratioNaarKleur(r) {
+  if (r <= 0) return 'rgba(26,30,42,0.5)';
+  const R = Math.round(15 + r * 220);
+  const G = Math.round(20 + (1-r) * 55);
+  const B = Math.round(20 + (1-r) * 45);
+  return `rgba(${R},${G},${B},${0.25 + r * 0.75})`;
+}
+
+// ╔═══════════════════════════════════════════════════════╗
+// ║  TAB 3 — KNELPUNT FUNCTIE                             ║
+// ╚═══════════════════════════════════════════════════════╝
+function renderFunctie(post) {
+  const labels = MAANDEN.map(m => m.replace('20','').replace('-','/'));
+
+  // Oorzaak stacked per maand
+  const oorzaak = { BEST:[], BEV6:[], BWM:[] };
+  MAANDEN.forEach(m => {
+    const o = DATA[m]?.map?.[post]?.oorzaak_pct || {};
+    oorzaak.BEST.push(o.BEST || 0);
+    oorzaak.BEV6.push(o.BEV6 || 0);
+    oorzaak.BWM.push(o.BWM   || 0);
+  });
+
+  vernieuwChart('chart-oorzaak', {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label:'BEST — Bestuurder',   data: oorzaak.BEST, backgroundColor:'rgba(244,114,182,0.8)', borderColor:'#f472b6', borderWidth:1 },
+      { label:'BEV6 — Bevelvoerder', data: oorzaak.BEV6, backgroundColor:'rgba(96,165,250,0.8)',  borderColor:'#60a5fa', borderWidth:1 },
+      { label:'BWM — Brandweerman',  data: oorzaak.BWM,  backgroundColor:'rgba(52,211,153,0.8)',  borderColor:'#34d399', borderWidth:1 }
+    ]},
+    options: {
+      ...chartOpties('% van uitval'),
+      scales: {
+        x: { stacked:true, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#8899aa', font:{family:'Titillium Web'}} },
+        y: { stacked:true, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#8899aa', font:{family:'Titillium Web'}} }
+      }
+    }
+  });
+
+  // Individuele functie-trendlijnen
+  ['BEST','BEV6','BWM'].forEach(functie => {
+    const pcts = MAANDEN.map(m => {
+      const fd = DATA[m]?.functies?.[post]?.[functie] || {};
+      const vals = [];
+      UREN.forEach(u => DAGEN.forEach(d => { const v=fd[u]?.[d]?.pct; if(v!==undefined) vals.push(v); }));
+      return vals.length ? +(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2) : 0;
+    });
+    const kleur = FUNC_KLEUREN[functie];
+    vernieuwChart(`chart-func-${functie.toLowerCase()}`, {
+      type: 'line',
+      data: { labels, datasets: [{
+        label: `${functie} onbeschikbaar %`,
+        data: pcts,
+        borderColor: kleur,
+        backgroundColor: kleur + '22',
+        borderWidth: 2, pointRadius: 3, fill: true, tension: 0.35
+      }]},
+      options: chartOpties('% onbeschikbaar')
+    });
+  });
+
+  // Actie tekst
+  const gemBest = oorzaak.BEST.reduce((a,b)=>a+b,0)/oorzaak.BEST.length;
+  const gemBev6 = oorzaak.BEV6.reduce((a,b)=>a+b,0)/oorzaak.BEV6.length;
+  const gemBwm  = oorzaak.BWM.reduce((a,b)=>a+b,0)/oorzaak.BWM.length;
+  const domLabel = gemBest>gemBev6 && gemBest>gemBwm ? 'BEST (bestuurder)' :
+                   gemBev6>gemBwm ? 'BEV6 (bevelvoerder)' : 'BWM (brandweerman)';
+  document.getElementById('actie-oorzaak').innerHTML =
+    `<strong>Knelpunt: ${domLabel}</strong> — Dit functietype is het vaakst verantwoordelijk voor MAP-uitval bij ${post.replace('TAX ','')}. Gerichte werving of planningsaanpassing voor dit profiel heeft de grootste impact op de paraatheid.`;
+}
+
+// ╔═══════════════════════════════════════════════════════╗
+// ║  TAB 4 — AI ANALYSE (GEMINI)                          ║
+// ╚═══════════════════════════════════════════════════════╝
+async function startAIAnalyse() {
+  const btn      = document.getElementById('ai-btn');
+  const resultEl = document.getElementById('ai-result');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> &nbsp;Gemini analyseert...';
+  resultEl.className = 'ai-result visible';
+  resultEl.innerHTML = '<p style="color:var(--text3)"><span class="pulse">●</span> Analyse wordt gegenereerd...</p>';
+
+  const post = ACTIEVE_POST;
+
+  // ── Samenvatting voor de prompt ──
+  const maandPcts = postGemPctPerMaand(post);
+  const gemMap    = (maandPcts.reduce((a,b)=>a+b,0)/maandPcts.length).toFixed(1);
+  const trend     = (maandPcts[maandPcts.length-1] - maandPcts[0]).toFixed(1);
+
+  // Top 3 knelpunt uren
+  const uurGem = {};
+  UREN.forEach(u => {
+    const v = []; MAANDEN.forEach(m => DAGEN.forEach(d => { const x=DATA[m]?.map?.[post]?.uren?.[u]?.[d]?.pct; if(x!==undefined)v.push(x); }));
+    uurGem[u] = v.length ? v.reduce((a,b)=>a+b,0)/v.length : 0;
+  });
+  const topUren = Object.entries(uurGem).sort((a,b)=>b[1]-a[1]).slice(0,3)
+    .map(([u,v]) => `${u}u (${v.toFixed(1)}%)`).join(', ');
+
+  // Top 2 knelpunt dagen
+  const dagGem = {};
+  DAGEN.forEach(d => {
+    const v=[]; MAANDEN.forEach(m => UREN.forEach(u => { const x=DATA[m]?.map?.[post]?.uren?.[u]?.[d]?.pct; if(x!==undefined)v.push(x); }));
+    dagGem[d] = v.length ? v.reduce((a,b)=>a+b,0)/v.length : 0;
+  });
+  const topDagen = Object.entries(dagGem).sort((a,b)=>b[1]-a[1]).slice(0,2)
+    .map(([d,v]) => `${DAG_LBL[d]} (${v.toFixed(1)}%)`).join(', ');
+
+  // Oorzaak gem
+  const ot={BEST:0,BEV6:0,BWM:0}; let ocnt=0;
+  MAANDEN.forEach(m => { const o=DATA[m]?.map?.[post]?.oorzaak_pct; if(o){ot.BEST+=o.BEST||0; ot.BEV6+=o.BEV6||0; ot.BWM+=o.BWM||0; ocnt++;} });
+  if (ocnt) { ot.BEST/=ocnt; ot.BEV6/=ocnt; ot.BWM/=ocnt; }
+
+  const prompt = `Je bent een operationeel analist bij HVZ Taxandria, een hulpverleningszone in de provincie Antwerpen (België).
+Analyseer de paraatheidsdata van brandweerpost ${post} en formuleer concrete, uitvoerbare actiepunten voor de postverantwoordelijke.
+Schrijf in het Nederlands. Toon professioneel, direct en operationeel. Vermijd beleidstaal.
+
+ANALYSEPERIODE: ${MAANDEN[0]} tot ${MAANDEN[MAANDEN.length-1]} (${MAANDEN.length} maanden)
+POST: ${post}
+
+STATISTIEKEN:
+- Gemiddelde MAP-onbeschikbaarheid: ${gemMap}%
+- Trend over de periode: ${Number(trend) > 0 ? '+' : ''}${trend}% (${Number(trend) > 1 ? 'stijgend ⚠' : Number(trend) < -1 ? 'dalend ✓' : 'stabiel'})
+- Knelpunt uren (hoogste gem. onbeschikbaarheid): ${topUren}
+- Knelpunt dagen: ${topDagen}
+- Oorzaakverdeling MAP-uitval: BEST ${ot.BEST.toFixed(1)}%, BEV6 ${ot.BEV6.toFixed(1)}%, BWM ${ot.BWM.toFixed(1)}%
+
+BEGRIPPEN:
+- MAP = Minimale Afruk Ploeg (het voertuig is onbeschikbaar als de MAP niet compleet is)
+- BEST = Bestuurder
+- BEV6 = Bevelvoerder (graad 6 of hoger)
+- BWM = Brandweerman
+
+Geef je analyse in het volgende formaat (gebruik ## als sectiehoofding):
+
+## Samenvatting
+[2-3 zinnen over de algemene paraatheid van de post, met cijfers]
+
+## Concrete knelpunten
+[Maximaal 4 knelpunten met specifieke uren, dagen of functies uit de data]
+
+## Actiepunten voor de postverantwoordelijke
+[Maximaal 5 concrete, uitvoerbare acties. Wees specifiek: noem dag, uur, functie. Geen vage aanbevelingen.]`;
+
+  try {
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const resp = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.35, maxOutputTokens: 1200 }
+      })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(()=>({}));
+      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+    const data = await resp.json();
+    const tekst = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Geen antwoord ontvangen.';
+    resultEl.innerHTML = formateerMarkdown(tekst);
+  } catch(err) {
+    resultEl.innerHTML = `
+      <p style="color:var(--crit)">⚠ Fout: ${err.message}</p>
+      <p style="color:var(--text3);margin-top:8px;font-size:12px">
+        Controleer de GEMINI_API_KEY bovenaan het HTML-bestand en of je key actief is op
+        <a href="https://aistudio.google.com" target="_blank" style="color:var(--bev6-clr)">aistudio.google.com</a>.
+      </p>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '↺ &nbsp;Heranalyse genereren';
+}
+
+function formateerMarkdown(tekst) {
+  // Escape HTML
+  let t = tekst.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Headers
+  t = t.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  t = t.replace(/^## (.+)$/gm,  '<h3>$1</h3>');
+  // Bold
+  t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/__(.+?)__/g,      '<strong>$1</strong>');
+  // Lijstitems (-, *, •, 1.)
+  t = t.replace(/^[\-\*\u2022] (.+)$/gm, '<li>$1</li>');
+  t = t.replace(/^\d+\. (.+)$/gm,         '<li>$1</li>');
+  // Wrap opeenvolgende li's in ul
+  t = t.replace(/(<li>[\s\S]*?<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+  // Paragrafen (regels zonder HTML-tag)
+  const lines = t.split('\n');
+  return lines.map(l => {
+    l = l.trim();
+    if (!l) return '';
+    if (/^<[hul]/.test(l)) return l;
+    return `<p>${l}</p>`;
+  }).filter(Boolean).join('');
+}
+
+// ╔═══════════════════════════════════════════════════════╗
+// ║  CHART HULPFUNCTIES                                   ║
+// ╚═══════════════════════════════════════════════════════╝
+function vernieuwChart(id, config) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  const ctx = document.getElementById(id)?.getContext('2d');
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, config);
+}
+
+function chartOpties(yLabel) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color:'#8899aa', font:{ family:'Titillium Web', size:12 } } }
+    },
+    scales: {
+      x: {
+        grid: { color:'rgba(255,255,255,0.04)' },
+        ticks: { color:'#8899aa', font:{ family:'Titillium Web', size:11 } }
+      },
+      y: {
+        grid: { color:'rgba(255,255,255,0.04)' },
+        ticks: { color:'#8899aa', font:{ family:'Titillium Web', size:11 } },
+        title: { display:!!yLabel, text:yLabel, color:'#556070', font:{ family:'Titillium Web', size:11 } }
+      }
+    }
+  };
+}
+
+// ╔═══════════════════════════════════════════════════════╗
+// ║  TABS                                                 ║
+// ╚═══════════════════════════════════════════════════════╝
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').for

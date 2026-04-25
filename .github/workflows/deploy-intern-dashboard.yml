@@ -1,0 +1,47 @@
+# ══════════════════════════════════════════════════════════════
+#  HVZ Taxandria — Deploy intern paraatheid dashboard
+#
+#  Wat deze workflow doet:
+#  1. Haalt de code op uit de repo
+#  2. Vervangt %%GEMINI_KEY%% in de HTML met de echte API key
+#     (die staat veilig in Repository Secrets, niet in de code)
+#  3. Publiceert het dashboard op GitHub Pages
+#
+#  Vereiste setup (eenmalig):
+#  → Ga naar je repo → Settings → Secrets and variables → Actions
+#  → Klik "New repository secret"
+#  → Naam:  GEMINI_API_KEY
+#  → Waarde: jouw Gemini API key (AIzaSy...)
+# ══════════════════════════════════════════════════════════════
+
+name: Deploy intern dashboard
+
+on:
+  push:
+    branches:
+      - main                      # automatisch bij elke push naar main
+  workflow_dispatch:              # of handmatig starten via GitHub UI
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write             # nodig om naar gh-pages branch te schrijven
+
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🔑 Gemini key injecteren
+        # Vervangt de placeholder %%GEMINI_KEY%% met de echte waarde uit Secrets
+        run: |
+          sed -i "s|%%GEMINI_KEY%%|${{ secrets.GEMINI_API_KEY }}|g" \
+            paraatheid_intern_analyse/dashboard_intern.html
+
+      - name: 🚀 Deploy naar GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./paraatheid_intern_analyse   # enkel de intern-map publiceren
+          destination_dir: intern                    # URL wordt: USERNAME.github.io/REPO/intern/
+          commit_message: "Deploy intern dashboard [skip ci]"
