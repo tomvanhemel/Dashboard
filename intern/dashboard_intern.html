@@ -438,8 +438,8 @@ const GDRIVE_JSON_URL = 'https://raw.githubusercontent.com/tomvanhemel/Dashboard
 // Of gebruik nog steeds een Google Drive publieke link — beide werken.
 
 // De key hieronder wordt automatisch ingevuld door GitHub Actions vanuit Repository Secrets.
-// In je repo staat letterlijk AIzaSyBa1Uw0SGoRawrpCbQEBSiq9rgVY2ptexc — de echte waarde verschijnt pas op de gedeployde site.
-const GEMINI_API_KEY = 'AIzaSyBa1Uw0SGoRawrpCbQEBSiq9rgVY2ptexc';
+// In je repo staat letterlijk %%OPENAI_KEY%% — de echte waarde verschijnt pas op de gedeployde site.
+const OPENAI_API_KEY = '%%OPENAI_KEY%%';
 
 // ─────────────────────────────────────────────────────────
 //  CONSTANTEN
@@ -460,7 +460,6 @@ const charts     = {};
 // ╔═══════════════════════════════════════════════════════╗
 // ║  DATA LADEN VAN GOOGLE DRIVE                          ║
 // ╚═══════════════════════════════════════════════════════╝
-// v2 — met timeout fix
 async function laadData() {
   const statusEl = document.getElementById('welcome-status');
   const startBtn = document.getElementById('start-btn');
@@ -903,13 +902,17 @@ Geef je analyse in het volgende formaat (gebruik ## als sectiehoofding):
 [Maximaal 5 concrete, uitvoerbare acties. Wees specifiek: noem dag, uur, functie. Geen vage aanbevelingen.]`;
 
   try {
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-    const resp = await fetch(apiUrl, {
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.35, maxOutputTokens: 1200 }
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.35,
+        max_tokens: 1200
       })
     });
     if (!resp.ok) {
@@ -917,14 +920,14 @@ Geef je analyse in het volgende formaat (gebruik ## als sectiehoofding):
       throw new Error(err.error?.message || `HTTP ${resp.status}`);
     }
     const data = await resp.json();
-    const tekst = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Geen antwoord ontvangen.';
+    const tekst = data.choices?.[0]?.message?.content || 'Geen antwoord ontvangen.';
     resultEl.innerHTML = formateerMarkdown(tekst);
   } catch(err) {
     resultEl.innerHTML = `
       <p style="color:var(--crit)">⚠ Fout: ${err.message}</p>
       <p style="color:var(--text3);margin-top:8px;font-size:12px">
-        Controleer de GEMINI_API_KEY bovenaan het HTML-bestand en of je key actief is op
-        <a href="https://aistudio.google.com" target="_blank" style="color:var(--bev6-clr)">aistudio.google.com</a>.
+        Controleer de OPENAI_API_KEY in de GitHub Repository Secrets en of je key actief is op
+        <a href="https://platform.openai.com" target="_blank" style="color:var(--bev6-clr)">platform.openai.com</a>.
       </p>`;
   }
 
@@ -971,4 +974,4 @@ function chartOpties(yLabel) {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { labe
+      legend: { labels: { color:'#8899a
